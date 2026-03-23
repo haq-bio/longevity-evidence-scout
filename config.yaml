@@ -1,83 +1,100 @@
 # Longevity Evidence Scout Configuration
-# Version 1.4 | January 2026
-# UPDATED: Added domain_keywords with tight, non-overlapping keyword sets
-# UPDATED: Aligned to DOM_ convention from Airtable ontology
-# UPDATED: Added negative keywords for exclusion logic
+# Version 1.5 | March 2026
+#
+# CHANGES v1.5:
+# - FIXED: High-risk queries that pulled inpatient/clinical medicine literature:
+#     - RDW heart failure: added community/cohort qualifiers
+#     - Hemoglobin anemia: restricted to community/aging cohort context
+#     - NLR: added community-dwelling qualifier
+#     - Albumin frailty: added community-dwelling qualifier
+#     - Cytokines: tightened to inflammaging + community context
+#     - "mortality" queries: added population qualifiers throughout
+# - NEW: Functional medicine / integrative biomarker keyword group
+# - NEW: Supplements & nutraceuticals keyword group (NAD+, NMN, omega-3, CoQ10, etc.)
+# - NEW: Gut microbiome & longevity keyword group
+# - NEW: Hormesis & lifestyle interventions keyword group
+# - NEW: Wearable / continuous biomarker monitoring keyword group
+# - CHANGED: min_score_to_save lowered from 4 to 3 (capture good smaller-journal studies)
+# - CHANGED: date_after extended from 2023-01-01 to 2020-01-01 (6-year lookback)
 
 search:
   keywords:
     # ═══════════════════════════════════════════════════════════
     # RDW - RED CELL DISTRIBUTION WIDTH (Inflammaging Marker)
+    # FIXED v1.5: Added community/cohort qualifiers; removed raw
+    # "heart failure prognosis" (was pulling inpatient ICU studies)
     # ═══════════════════════════════════════════════════════════
-    - "red cell distribution width all-cause mortality"
-    - "RDW cardiovascular mortality risk"
-    - "RDW inflammation oxidative stress"
-    - "red cell distribution width inflammaging"
-    - "RDW elevated normal hemoglobin"
-    - "anisocytosis mortality chronic disease"
-    - "RDW C-reactive protein inflammation"
-    - "red cell distribution width frailty aging"
-    - "RDW heart failure prognosis"
-    - "RDW metabolic syndrome diabetes"
-    
+    - "red cell distribution width all-cause mortality community cohort"
+    - "RDW cardiovascular mortality community-dwelling adults"
+    - "RDW inflammation oxidative stress general population"
+    - "red cell distribution width inflammaging aging cohort"
+    - "RDW elevated normal hemoglobin community"
+    - "anisocytosis mortality chronic disease outpatient"
+    - "RDW C-reactive protein inflammation population-based"
+    - "red cell distribution width frailty aging community"
+    - "RDW long-term outcomes heart failure longitudinal cohort"
+    - "RDW metabolic syndrome diabetes community"
+
     # ═══════════════════════════════════════════════════════════
     # AGING & BIOLOGICAL AGE
     # ═══════════════════════════════════════════════════════════
-    - "biological age blood biomarkers"
+    - "biological age blood biomarkers community"
     - "epigenetic clock methylation aging"
-    - "telomere length longevity mortality"
+    - "telomere length longevity mortality community cohort"
     - "inflammaging chronic inflammation aging"
     - "GrimAge epigenetic aging mortality"
     - "DunedinPACE biological aging"
     - "DNA methylation age acceleration"
-    
+
     # ═══════════════════════════════════════════════════════════
     # METABOLIC HEALTH
     # ═══════════════════════════════════════════════════════════
-    - "glucose regulation longevity insulin sensitivity"
-    - "HbA1c aging mortality risk"
+    - "glucose regulation longevity insulin sensitivity community"
+    - "HbA1c aging mortality risk cohort"
     - "metabolic health lifespan triglycerides"
-    - "fasting glucose healthspan diabetes prevention"
-    - "insulin resistance metabolic syndrome aging"
+    - "fasting glucose healthspan diabetes prevention outpatient"
+    - "insulin resistance metabolic syndrome aging community"
     - "HOMA-IR metabolic health longevity"
-    
+
     # ═══════════════════════════════════════════════════════════
     # CARDIOVASCULAR / LIPID BIOMARKERS
     # ═══════════════════════════════════════════════════════════
     - "homocysteine cardiovascular aging"
     - "lipoprotein(a) longevity mortality"
     - "apolipoprotein B cardiovascular risk aging"
-    - "LDL cholesterol mortality cardiovascular"
+    - "LDL cholesterol mortality cardiovascular community"
     - "HDL cholesterol longevity outcomes"
     - "triglycerides cardiovascular risk aging"
     - "ApoB particle number cardiovascular"
     - "Lp(a) cardiovascular disease risk"
-    
+
     # ═══════════════════════════════════════════════════════════
     # INFLAMMATION MARKERS
+    # FIXED v1.5: "cytokines aging chronic disease" was too broad;
+    # now qualified to inflammaging/community context
     # ═══════════════════════════════════════════════════════════
-    - "C-reactive protein CRP mortality aging"
-    - "interleukin-6 IL-6 inflammaging"
-    - "cytokines aging chronic disease"
+    - "C-reactive protein CRP mortality aging community"
+    - "interleukin-6 IL-6 inflammaging community cohort"
+    - "cytokines inflammaging longevity community"
     - "high-sensitivity CRP cardiovascular longevity"
-    - "TNF-alpha inflammation aging"
-    
+    - "TNF-alpha inflammation aging community"
+
     # ═══════════════════════════════════════════════════════════
     # KIDNEY FUNCTION
     # ═══════════════════════════════════════════════════════════
-    - "eGFR kidney function aging mortality"
-    - "cystatin C renal aging"
-    - "creatinine kidney aging mortality"
-    - "chronic kidney disease biomarkers aging"
-    
+    - "eGFR kidney function aging mortality community"
+    - "cystatin C renal aging outpatient"
+    - "creatinine kidney aging mortality community cohort"
+    - "chronic kidney disease progression aging community"
+
     # ═══════════════════════════════════════════════════════════
     # LIVER FUNCTION
     # ═══════════════════════════════════════════════════════════
-    - "liver enzymes GGT longevity"
-    - "albumin aging frailty mortality"
-    - "ALT AST liver function aging"
-    - "fatty liver disease biomarkers"
-    
+    - "liver enzymes GGT longevity community"
+    - "albumin aging frailty mortality community-dwelling"
+    - "ALT AST liver function aging community cohort"
+    - "NAFLD fatty liver aging general population"
+
     # ═══════════════════════════════════════════════════════════
     # THYROID (TSH, T3, T4 only - NOT sex hormones)
     # ═══════════════════════════════════════════════════════════
@@ -86,7 +103,7 @@ search:
     - "subclinical hypothyroidism aging"
     - "free T3 free T4 mortality"
     - "Hashimoto thyroiditis outcomes"
-    
+
     # ═══════════════════════════════════════════════════════════
     # HORMONES - MALE TRT
     # ═══════════════════════════════════════════════════════════
@@ -97,7 +114,7 @@ search:
     - "testosterone deficiency all-cause mortality"
     - "testosterone therapy cognitive function men"
     - "free testosterone SHBG men aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # HORMONES - FEMALE HRT
     # ═══════════════════════════════════════════════════════════
@@ -109,7 +126,7 @@ search:
     - "transdermal estrogen VTE thrombosis risk"
     - "estradiol progesterone breast cancer risk"
     - "SHBG estrogen women aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # HORMONES - FEMALE TESTOSTERONE
     # ═══════════════════════════════════════════════════════════
@@ -117,7 +134,7 @@ search:
     - "testosterone therapy postmenopausal libido"
     - "androgen deficiency women fatigue"
     - "female testosterone supplementation outcomes"
-    
+
     # ═══════════════════════════════════════════════════════════
     # HORMONES - PROGESTERONE & PERIMENOPAUSE
     # ═══════════════════════════════════════════════════════════
@@ -126,7 +143,7 @@ search:
     - "luteal phase deficiency treatment"
     - "progesterone anxiety mood sleep"
     - "perimenopause hormone decline symptoms"
-    
+
     # ═══════════════════════════════════════════════════════════
     # HORMONES - OTHER (DHEA, Cortisol, IGF-1)
     # ═══════════════════════════════════════════════════════════
@@ -134,7 +151,7 @@ search:
     - "IGF-1 growth hormone aging mortality"
     - "cortisol aging stress HPA axis"
     - "pregnenolone neurosteroid aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # EPIGENETIC CLOCKS + HORMONES
     # ═══════════════════════════════════════════════════════════
@@ -143,14 +160,14 @@ search:
     - "GrimAge hormone therapy aging"
     - "DunedinPACE estrogen testosterone"
     - "DNA methylation age hormone intervention"
-    
+
     # ═══════════════════════════════════════════════════════════
     # MENDELIAN RANDOMIZATION - HORMONES
     # ═══════════════════════════════════════════════════════════
     - "mendelian randomization testosterone cardiovascular"
     - "mendelian randomization estrogen longevity"
     - "genetic testosterone mortality causal"
-    
+
     # ═══════════════════════════════════════════════════════════
     # VITAMINS & NUTRIENTS
     # ═══════════════════════════════════════════════════════════
@@ -160,23 +177,25 @@ search:
     - "ferritin iron status aging"
     - "magnesium deficiency cardiovascular aging"
     - "zinc immune function aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # HEMATOLOGY / BLOOD COUNTS
+    # FIXED v1.5: "hemoglobin aging anemia mortality" → qualified;
+    # "NLR aging" → added community-dwelling qualifier
     # ═══════════════════════════════════════════════════════════
-    - "hemoglobin aging anemia mortality"
-    - "neutrophil lymphocyte ratio NLR aging"
-    - "platelet count aging cardiovascular"
+    - "hemoglobin aging community-dwelling adults mortality"
+    - "neutrophil lymphocyte ratio NLR aging community"
+    - "platelet count aging cardiovascular community cohort"
     - "mean corpuscular volume MCV aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # OXIDATIVE STRESS
     # ═══════════════════════════════════════════════════════════
-    - "oxidative stress biomarkers aging"
+    - "oxidative stress biomarkers aging community"
     - "glutathione antioxidant longevity"
     - "lipid peroxidation aging disease"
     - "8-OHdG oxidative DNA damage aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # METHYLATION
     # ═══════════════════════════════════════════════════════════
@@ -184,7 +203,7 @@ search:
     - "folate B12 methylation aging"
     - "SAMe methylation longevity"
     - "one-carbon metabolism aging"
-    
+
     # ═══════════════════════════════════════════════════════════
     # LONGEVITY PATHWAYS
     # ═══════════════════════════════════════════════════════════
@@ -194,7 +213,95 @@ search:
     - "autophagy biomarkers longevity"
     - "senescent cells senolytics aging"
 
-  date_after: "2023-01-01"
+    # ═══════════════════════════════════════════════════════════
+    # NEW v1.5: SUPPLEMENTS & NUTRACEUTICALS
+    # All queries paired with biomarker outcomes; community-qualified
+    # ═══════════════════════════════════════════════════════════
+    - "NMN nicotinamide mononucleotide NAD aging biomarker"
+    - "NR nicotinamide riboside NAD+ human trial"
+    - "resveratrol aging biomarker inflammation community"
+    - "CoQ10 coenzyme Q10 aging cardiovascular biomarker"
+    - "berberine metabolic biomarker aging"
+    - "quercetin senolytic aging biomarker"
+    - "omega-3 EPA DHA biomarker inflammation longevity"
+    - "magnesium supplementation aging biomarker"
+    - "vitamin D3 supplementation aging mortality prevention"
+    - "vitamin K2 MK-7 cardiovascular calcification aging"
+    - "spermidine autophagy aging biomarker human"
+    - "fisetin senolytic aging inflammation human"
+    - "alpha-lipoic acid antioxidant aging biomarker"
+    - "curcumin turmeric inflammation biomarker aging"
+    - "astaxanthin oxidative stress aging biomarker"
+    - "melatonin aging mitochondria oxidative stress"
+    - "phosphatidylserine cognitive aging biomarker"
+    - "glycine collagen aging biomarker human"
+    - "taurine aging longevity biomarker human"
+    - "urolithin A mitophagy aging human trial"
+
+    # ═══════════════════════════════════════════════════════════
+    # NEW v1.5: GUT MICROBIOME & LONGEVITY
+    # ═══════════════════════════════════════════════════════════
+    - "gut microbiome aging longevity community"
+    - "gut microbiota inflammation biomarker aging"
+    - "microbiome diversity aging healthspan"
+    - "butyrate short-chain fatty acids aging inflammation"
+    - "akkermansia muciniphila aging metabolic health"
+    - "probiotic prebiotic aging biomarker community"
+    - "gut permeability leaky gut aging inflammation"
+    - "intestinal microbiome immune function aging"
+    - "microbiome epigenetic aging"
+    - "fecal microbiota composition longevity community cohort"
+
+    # ═══════════════════════════════════════════════════════════
+    # NEW v1.5: HORMESIS & LIFESTYLE INTERVENTIONS
+    # All qualified to community/healthy adult populations
+    # ═══════════════════════════════════════════════════════════
+    - "intermittent fasting biomarker aging community"
+    - "time-restricted eating metabolic biomarker adults"
+    - "caloric restriction biomarker aging humans"
+    - "fasting mimicking diet aging biomarker"
+    - "cold exposure cold water immersion biomarker aging"
+    - "sauna heat exposure cardiovascular biomarker longevity"
+    - "exercise training aging biomarker community"
+    - "resistance training biomarker frailty community-dwelling"
+    - "aerobic exercise VO2max aging biomarker community"
+    - "high-intensity interval training HIIT aging biomarker"
+    - "sleep quality aging biomarker community"
+    - "sleep duration mortality aging community cohort"
+    - "chronobiology circadian rhythm aging biomarker"
+
+    # ═══════════════════════════════════════════════════════════
+    # NEW v1.5: FUNCTIONAL MEDICINE / INTEGRATIVE BIOMARKERS
+    # ═══════════════════════════════════════════════════════════
+    - "comprehensive metabolic panel aging functional medicine"
+    - "organic acids biomarker aging wellness"
+    - "amino acid profile aging metabolomics"
+    - "lipidomics aging community cohort"
+    - "proteomics aging plasma biomarker"
+    - "metabolomics aging longevity community"
+    - "micronutrient deficiency multiple aging community"
+    - "adrenal function cortisol DHEA ratio aging"
+    - "HRV heart rate variability aging biomarker"
+    - "grip strength muscle function aging biomarker"
+    - "VO2max cardiorespiratory fitness aging mortality"
+    - "APOE genotype aging longevity biomarker"
+    - "GDF-15 aging inflammation longevity"
+    - "Klotho fibroblast growth factor aging"
+    - "growth differentiation factor aging biomarker"
+
+    # ═══════════════════════════════════════════════════════════
+    # NEW v1.5: WEARABLE / CONTINUOUS BIOMARKER MONITORING
+    # Specifically restricted to healthy/community populations
+    # ═══════════════════════════════════════════════════════════
+    - "continuous glucose monitor healthy adults biomarker"
+    - "CGM non-diabetic aging glucose variability"
+    - "wearable device biomarker aging healthy adults"
+    - "continuous biomarker monitoring community wellness"
+    - "remote patient monitoring biomarker outpatient"
+    - "digital biomarker aging community"
+    - "ambulatory blood pressure aging community cohort"
+
+  date_after: "2020-01-01"
   max_results: 20
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -592,6 +699,88 @@ domain_keywords:
     negative: []
     title_weight: 3
 
+  # ---------------------------------------------------------------------------
+  # DOM_MICROBIOME - Gut microbiome and longevity (NEW v1.5)
+  # ---------------------------------------------------------------------------
+  DOM_MICROBIOME:
+    primary:
+      - gut microbiome
+      - gut microbiota
+      - microbiome diversity
+      - butyrate
+      - short-chain fatty acid
+      - akkermansia
+      - lactobacillus
+      - bifidobacterium
+      - probiotic
+      - prebiotic
+      - gut permeability
+      - intestinal barrier
+      - dysbiosis
+      - microbiota composition
+      - fecal microbiota
+      - 16S rRNA
+      - metagenomics
+    negative: []
+    title_weight: 3
+
+  # ---------------------------------------------------------------------------
+  # DOM_SUPPLEMENT - Nutraceuticals & supplements (NEW v1.5)
+  # ---------------------------------------------------------------------------
+  DOM_SUPPLEMENT:
+    primary:
+      - NMN
+      - NR
+      - nicotinamide riboside
+      - nicotinamide mononucleotide
+      - resveratrol
+      - CoQ10
+      - coenzyme Q10
+      - berberine
+      - quercetin
+      - spermidine
+      - fisetin
+      - urolithin A
+      - astaxanthin
+      - curcumin
+      - alpha-lipoic acid
+      - phosphatidylserine
+      - glycine supplementation
+      - taurine supplementation
+      - nutraceutical
+      - dietary supplement
+    negative: []
+    title_weight: 3
+
+  # ---------------------------------------------------------------------------
+  # DOM_LIFESTYLE - Lifestyle interventions and hormesis (NEW v1.5)
+  # ---------------------------------------------------------------------------
+  DOM_LIFESTYLE:
+    primary:
+      - intermittent fasting
+      - time-restricted eating
+      - caloric restriction
+      - fasting mimicking
+      - cold exposure
+      - cold water immersion
+      - sauna
+      - heat therapy
+      - exercise training
+      - resistance training
+      - aerobic exercise
+      - HIIT
+      - VO2max
+      - sleep quality
+      - sleep duration
+      - circadian rhythm
+      - chronobiology
+      - HRV
+      - heart rate variability
+      - grip strength
+      - physical activity
+    negative: []
+    title_weight: 2
+
 # ═══════════════════════════════════════════════════════════════════════════
 # AIRTABLE CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
@@ -602,10 +791,12 @@ airtable:
 
 # ═══════════════════════════════════════════════════════════════════════════
 # SCORING CONFIGURATION
+# v1.5: Lowered from 4 to 3 to capture good smaller-journal / smaller-sample
+# wellness studies that were previously filtered out
 # ═══════════════════════════════════════════════════════════════════════════
 
 scoring:
-  min_score_to_save: 4
+  min_score_to_save: 3
 
 # ═══════════════════════════════════════════════════════════════════════════
 # DOMAINS LIST (for reference - actual classification uses domain_keywords)
@@ -617,10 +808,13 @@ domains:
   - DOM_HORMONE
   - DOM_INFLAMMATION
   - DOM_KIDNEY
+  - DOM_LIFESTYLE
   - DOM_LIPID
   - DOM_LIVER
   - DOM_METABOLIC
   - DOM_METHYLATION
+  - DOM_MICROBIOME
   - DOM_NUTRIENT
   - DOM_OXIDATIVE
+  - DOM_SUPPLEMENT
   - DOM_THYROID

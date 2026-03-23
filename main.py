@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
-Longevity Evidence Scout v1.4
+Longevity Evidence Scout v1.5
 Automated discovery of healthspan and blood biomarker research from PubMed
 
 Based on ToxEcology Evidence Scout v2.2 architecture
 Adapted for longevity science and blood biomarkers
+
+v1.5 CHANGES:
+- NEW: Abstract-level inpatient/acute-care exclusion check (before Claude API call)
+- NEW: population_type extracted by Claude; inpatient studies are skipped entirely
+- NEW: Expanded TOP_JOURNALS with longevity/preventive medicine journals
+- REMOVED: "annals of internal medicine" from TOP_JOURNALS (too inpatient-heavy)
+- NEW: inpatient_excluded stat counter for visibility into filtered studies
 
 v1.4 CHANGES:
 - NEW: domain_keywords loaded from config.yaml with tight, non-overlapping sets
@@ -68,15 +75,30 @@ AIRTABLE_TABLE_NAME = "Clinical_Evidence"
 HEALTH_CONDITIONS_TABLE = "Health_Conditions"
 SYMPTOM_CLUSTERS_TABLE = "Symptom_Clusters"
 
-# High-impact journals for longevity/aging research
+# High-impact journals for longevity/aging/preventive health research
+# v1.5: Removed "annals of internal medicine" (inpatient-heavy). Added
+# longevity, preventive medicine, and nutrition-focused journals.
 TOP_JOURNALS = [
-    "nature aging", "cell metabolism", "aging cell",
-    "nature medicine", "lancet healthy longevity", "jama",
-    "nejm", "lancet", "bmj", "journals of gerontology",
-    "geroscience", "aging", "nature", "science", "cell",
-    "annals of internal medicine", "circulation", "diabetes care",
-    "plos one", "plos medicine", "scientific reports",
-    "frontiers in aging", "experimental gerontology"
+    # Core longevity / aging science
+    "nature aging", "aging cell", "geroscience", "aging",
+    "experimental gerontology", "frontiers in aging",
+    "journals of gerontology", "age and ageing",
+    "journal of gerontology", "lancet healthy longevity",
+    # High-impact general / clinical
+    "nature medicine", "nature", "science", "cell",
+    "cell metabolism", "nejm", "lancet", "jama", "bmj",
+    "plos medicine", "plos one", "scientific reports",
+    # Cardiovascular / metabolic
+    "circulation", "diabetes care", "journal of clinical endocrinology",
+    "european heart journal",
+    # Preventive medicine & nutrition
+    "preventive medicine", "american journal of preventive medicine",
+    "nutrients", "journal of nutritional biochemistry",
+    "american journal of clinical nutrition",
+    "journal of the academy of nutrition and dietetics",
+    # Integrative / functional medicine adjacent
+    "journal of clinical medicine", "biomedicines",
+    "frontiers in nutrition", "frontiers in physiology"
 ]
 
 # =============================================================================
@@ -174,10 +196,82 @@ stats = {
     "total_searched": 0,
     "abstracts_fetched": 0,
     "duplicates_skipped": 0,
+    "inpatient_excluded": 0,
     "below_threshold": 0,
+    "population_type_excluded": 0,
     "added_to_airtable": 0,
     "errors": 0
 }
+
+# ============================================================================
+# INPATIENT / ACUTE-CARE EXCLUSION  (v1.5)
+# These phrases in the title or abstract signal hospital/inpatient populations
+# that are NOT relevant to wellness biomarker and healthspan research.
+# Checked BEFORE calling Claude to save API costs.
+# ============================================================================
+
+INPATIENT_EXCLUSION_PHRASES = [
+    "hospitalized patients",
+    "hospitalised patients",
+    "hospitalized adults",
+    "hospitalised adults",
+    "hospitalized older",
+    "hospitalised older",
+    "hospital inpatients",
+    "inpatient",
+    "intensive care unit",
+    "icu patients",
+    "icu admission",
+    "critically ill",
+    "critical illness",
+    "acute care",
+    "acute illness",
+    "mechanically ventilated",
+    "mechanical ventilation",
+    "acute kidney injury",
+    "acute liver failure",
+    "acute decompensation",
+    "acute respiratory failure",
+    "acute respiratory distress",
+    "post-operative",
+    "postoperative",
+    "perioperative",
+    "emergency department",
+    "emergency admission",
+    "hospital admission",
+    "hospital-acquired",
+    "hospital acquired",
+    "sepsis patients",
+    "septic shock",
+    "hemodialysis patients",
+    "dialysis patients",
+    "end-stage renal disease",
+    "end stage renal",
+    "liver transplant",
+    "organ transplant",
+    "blood transfusion",
+    "chemotherapy patients",
+    "oncology patients",
+    "cancer patients",
+    "critically injured",
+    "trauma patients",
+    "surgical patients",
+    "cardiothoracic surgery",
+    "cardiac surgery patients",
+]
+
+
+def is_inpatient_study(title: str, abstract: str) -> tuple[bool, str]:
+    """
+    Check whether a study's title+abstract signals an inpatient/acute-care
+    population.  Returns (True, matched_phrase) if exclusion applies,
+    (False, '') otherwise.
+    """
+    combined = f"{title} {abstract}".lower()
+    for phrase in INPATIENT_EXCLUSION_PHRASES:
+        if phrase in combined:
+            return True, phrase
+    return False, ""
 
 # ============================================================================
 # AIRTABLE CACHING FUNCTIONS
@@ -667,7 +761,7 @@ def format_stars(num):
 def ask_claude(article, domain):
     """Use Claude to extract structured metadata from abstract"""
     client = Anthropic(api_key=ANTHROPIC_KEY)
-    
+
     prompt = f"""Analyze this longevity/healthspan research article and extract structured information.
 
 TITLE: {article['title']}
@@ -686,7 +780,8 @@ Extract the following in JSON format:
     "key_findings": "2-3 sentence summary of main findings relevant to longevity/healthspan",
     "effect_size": "Quantified effect (HR, OR, correlation, β, etc.) or 'Not reported'",
     "clinical_relevance": "Practical implications for healthspan optimization",
-    "limitations": "Key study limitations"
+    "limitations": "Key study limitations",
+    "population_type": "Classify the study population as exactly one of: 'community/outpatient' (community-dwelling adults, general population, outpatient cohorts, population-based registries, prevention trials), 'inpatient' (hospitalized patients, ICU, acute care, surgical, critically ill, dialysis), 'mixed' (includes both community and hospital-based populations), or 'not specified' (population setting cannot be determined from abstract)"
 }}
 
 Return ONLY valid JSON, no markdown formatting."""
@@ -874,42 +969,58 @@ def main():
         
         for pmid in pmids:
             time.sleep(0.4)
-            
+
             article = fetch_pubmed_abstract(pmid)
             if not article or not article.get("abstract"):
                 continue
-            
+
             title_lower = article["title"].lower().strip()
             if title_lower in existing_titles:
                 print(f"   ⏭️ Duplicate: {article['title'][:50]}...")
                 stats["duplicates_skipped"] += 1
                 continue
-            
+
+            # v1.5: Abstract-level inpatient exclusion — runs BEFORE Claude call
+            excluded, matched_phrase = is_inpatient_study(
+                article["title"], article["abstract"]
+            )
+            if excluded:
+                print(f"   🏥 Inpatient excluded ({matched_phrase}): {article['title'][:50]}...")
+                stats["inpatient_excluded"] += 1
+                continue
+
             # v1.4: Use new domain detection with title weighting
             domain = detect_domain(
-                article["title"], 
-                article["abstract"], 
+                article["title"],
+                article["abstract"],
                 keyword,
                 config
             )
-            
+
             print(f"   🤖 Analyzing: {article['title'][:50]}...")
             extracted = ask_claude(article, domain)
             if not extracted:
                 continue
-            
+
+            # v1.5: population_type gate — skip confirmed inpatient studies
+            pop_type = extracted.get("population_type", "not specified").lower().strip()
+            if "inpatient" in pop_type:
+                print(f"   🏥 Claude flagged inpatient population — skipping")
+                stats["population_type_excluded"] += 1
+                continue
+
             stars = calculate_stars(
                 extracted.get("evidence_type", ""),
                 extracted.get("sample_size", ""),
                 article["journal"],
                 extracted.get("effect_size", "")
             )
-            
+
             if stars < min_score:
                 print(f"   ⏭️ Below threshold ({format_stars(stars)})")
                 stats["below_threshold"] += 1
                 continue
-            
+
             if add_to_airtable(article, extracted, stars, domain):
                 existing_titles.add(title_lower)
     
@@ -919,6 +1030,8 @@ def main():
     print(f"   🔍 Articles searched: {stats['total_searched']}")
     print(f"   📄 Abstracts fetched: {stats['abstracts_fetched']}")
     print(f"   ⏭️ Duplicates skipped: {stats['duplicates_skipped']}")
+    print(f"   🏥 Inpatient excluded (abstract): {stats['inpatient_excluded']}")
+    print(f"   🏥 Inpatient excluded (Claude): {stats['population_type_excluded']}")
     print(f"   📉 Below threshold: {stats['below_threshold']}")
     print(f"   ✅ Added to Airtable: {stats['added_to_airtable']}")
     print(f"   ❌ Errors: {stats['errors']}")
