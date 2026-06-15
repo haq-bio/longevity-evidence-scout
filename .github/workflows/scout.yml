@@ -27,6 +27,7 @@ jobs:
       - name: Run Longevity Evidence Scout
         env:
           ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
           AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
           AIRTABLE_CLINICAL_BASE_ID: ${{ secrets.AIRTABLE_CLINICAL_BASE_ID }}
         run: python main.py
