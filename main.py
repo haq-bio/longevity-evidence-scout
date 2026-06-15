@@ -788,7 +788,7 @@ Return ONLY valid JSON, no markdown formatting."""
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
             max_tokens=1500,
             messages=[{"role": "user", "content": prompt}]
         )
